@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>連線診斷工具</title>
+    <link rel="icon" type="image/webp" href="logo-s.webp">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", Arial, sans-serif;
+            background: #000000;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: #1a1a1a;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            max-width: 600px;
+            width: 100%;
+            padding: 30px;
+            border: 1px solid #333;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        h1 {
+            color: #ffffff;
+            margin-bottom: 10px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #999;
+            margin-bottom: 25px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .info-value {
+            color: #ffffff;
+            font-weight: 500;
+            font-size: 14px;
+            text-align: right;
+            max-width: 60%;
+            word-break: break-word;
+        }
+
+        .loading {
+            color: #4a9eff;
+            font-style: italic;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 8px;
+            background: #1a1a1a;
+            color: #ffffff;
+            cursor: pointer;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #4a9eff;
+        }
+
+        option {
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .speed-test-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: #1a1a1a;
+            border-radius: 8px;
+            border: 2px solid #333;
+        }
+
+        .speed-test-item.fastest {
+            border-color: #4caf50;
+            background: #1a2a1a;
+        }
+
+        .speed-test-item.slow {
+            border-color: #ff9800;
+            background: #2a2010;
+        }
+
+        .speed-test-item.error {
+            border-color: #f44336;
+            background: #2a1010;
+        }
+
+        .domain {
+            font-weight: 600;
+            color: #4a9eff;
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .domain:hover {
+            color: #70b5ff;
+            text-decoration: underline;
+        }
+
+        .domain-icon {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+        }
+
+        .speed {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge.fastest {
+            background: #4caf50;
+            color: white;
+        }
+
+        .badge.slow {
+            background: #ff9800;
+            color: white;
+        }
+
+        .badge.error {
+            background: #f44336;
+            color: white;
+        }
+
+        .recommendation {
+            background: #4a9eff;
+            color: #000000;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-copy {
+            background: #4a9eff;
+            color: #000000;
+        }
+
+        .btn-retest {
+            background: #333;
+            color: #ffffff;
+            border: 1px solid #555;
+        }
+
+        .copied {
+            background: #4caf50 !important;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #333;
+            border-top: 2px solid #4a9eff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .timestamp {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="logo.webp" alt="Logo">
+        </div>
+        <h1>連線診斷工具</h1>
+
+        <div class="section">
+            <div class="section-title">IP 資訊</div>
+            <div class="info-row">
+                <span class="info-label">IP 位址</span>
+                <span class="info-value" id="ip">偵測中...</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">地區</span>
+                <span class="info-value" id="location">偵測中...</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">網路運營商</span>
+                <span class="info-value" id="isp">偵測中...</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">設備資訊</div>
+            <div class="info-row">
+                <span class="info-label">設備類型</span>
+                <span class="info-value" id="device">偵測中...</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">操作系統</span>
+                <span class="info-value" id="os">偵測中...</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">瀏覽器</span>
+                <span class="info-value" id="browser">偵測中...</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">螢幕解析度</span>
+                <span class="info-value" id="screen">偵測中...</span>
+            </div>
+            <div id="modelSelector" style="display:none; margin-top: 15px;">
+                <label class="info-label" style="display: block; margin-bottom: 5px;">
+                    無法自動識別具體型號，請手動選擇：
+                </label>
+                <select id="modelSelect">
+                    <option value="">請選擇您的設備型號...</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">網域連線速度測試</div>
+            <div id="speedTestResults">
+                <div style="text-align: center; padding: 20px; color: #4a9eff;">
+                    <div class="spinner"></div>
+                    <div style="margin-top: 10px;">正在測試網域速度...</div>
+                </div>
+            </div>
+            <div id="recommendation" style="display:none;"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">其他資訊</div>
+            <div class="info-row">
+                <span class="info-label">訪問時間</span>
+                <span class="info-value" id="timestamp">偵測中...</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">User Agent</span>
+                <span class="info-value" id="userAgent" style="font-size: 11px; max-width: 70%;">偵測中...</span>
+            </div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn-copy" id="copyBtn" onclick="copyAllInfo()">複製全部資訊</button>
+            <button class="btn-retest" onclick="location.reload()">重新測試</button>
+        </div>
+
+        <div class="timestamp" id="updateTime"></div>
+    </div>
+
+    <script>
+        // 全局数据存储
+        const data = {
+            ip: '',
+            location: '',
+            isp: '',
+            device: '',
+            os: '',
+            browser: '',
+            screen: '',
+            model: '',
+            timestamp: '',
+            userAgent: '',
+            speedTest: []
+        };
+
+        // 获取设备信息
+        function getDeviceInfo() {
+            const ua = navigator.userAgent;
+            data.userAgent = ua;
+            document.getElementById('userAgent').textContent = ua;
+
+            // 检测操作系统
+            let os = 'Unknown';
+            let device = 'Desktop';
+
+            if (ua.match(/iPhone/i)) {
+                os = 'iOS';
+                device = 'iPhone';
+                const match = ua.match(/OS ([\d_]+)/);
+                if (match) os += ' ' + match[1].replace(/_/g, '.');
+                showModelSelector('iphone');
+            } else if (ua.match(/iPad/i)) {
+                os = 'iOS';
+                device = 'iPad';
+                const match = ua.match(/OS ([\d_]+)/);
+                if (match) os += ' ' + match[1].replace(/_/g, '.');
+                showModelSelector('ipad');
+            } else if (ua.match(/Android/i)) {
+                os = 'Android';
+                device = 'Android';
+                const match = ua.match(/Android ([\d.]+)/);
+                if (match) os += ' ' + match[1];
+
+                // 尝试获取 Android 型号
+                const modelMatch = ua.match(/;\s*([^;)]+)\s+Build/);
+                if (modelMatch) {
+                    device = modelMatch[1].trim();
+                } else {
+                    showModelSelector('android');
+                }
+            } else if (ua.match(/Windows/i)) {
+                os = 'Windows';
+                if (ua.match(/Windows NT 10/i)) os = 'Windows 10/11';
+                else if (ua.match(/Windows NT 6.3/i)) os = 'Windows 8.1';
+                else if (ua.match(/Windows NT 6.2/i)) os = 'Windows 8';
+                else if (ua.match(/Windows NT 6.1/i)) os = 'Windows 7';
+            } else if (ua.match(/Mac OS X/i)) {
+                os = 'macOS';
+                const match = ua.match(/Mac OS X ([\d_]+)/);
+                if (match) os += ' ' + match[1].replace(/_/g, '.');
+            } else if (ua.match(/Linux/i)) {
+                os = 'Linux';
+            }
+
+            data.os = os;
+            data.device = device;
+
+            // 检测浏览器
+            let browser = 'Unknown';
+            if (ua.match(/Edg\//i)) {
+                browser = 'Microsoft Edge';
+                const match = ua.match(/Edg\/([\d.]+)/);
+                if (match) browser += ' ' + match[1];
+            } else if (ua.match(/Chrome/i) && !ua.match(/Edg/i)) {
+                browser = 'Chrome';
+                const match = ua.match(/Chrome\/([\d.]+)/);
+                if (match) browser += ' ' + match[1];
+            } else if (ua.match(/Safari/i) && !ua.match(/Chrome/i)) {
+                browser = 'Safari';
+                const match = ua.match(/Version\/([\d.]+)/);
+                if (match) browser += ' ' + match[1];
+            } else if (ua.match(/Firefox/i)) {
+                browser = 'Firefox';
+                const match = ua.match(/Firefox\/([\d.]+)/);
+                if (match) browser += ' ' + match[1];
+            }
+
+            data.browser = browser;
+
+            // 屏幕分辨率
+            data.screen = `${window.screen.width}x${window.screen.height}`;
+
+            // 更新显示
+            document.getElementById('device').textContent = device;
+            document.getElementById('os').textContent = os;
+            document.getElementById('browser').textContent = browser;
+            document.getElementById('screen').textContent = data.screen;
+        }
+
+        // 显示型号选择器
+        function showModelSelector(type) {
+            const selector = document.getElementById('modelSelector');
+            const select = document.getElementById('modelSelect');
+
+            select.innerHTML = '<option value="">請選擇您的設備型號...</option>';
+
+            if (type === 'iphone') {
+                const models = [
+                    'iPhone 15 Pro Max', 'iPhone 15 Pro', 'iPhone 15 Plus', 'iPhone 15',
+                    'iPhone 14 Pro Max', 'iPhone 14 Pro', 'iPhone 14 Plus', 'iPhone 14',
+                    'iPhone 13 Pro Max', 'iPhone 13 Pro', 'iPhone 13', 'iPhone 13 mini',
+                    'iPhone 12 Pro Max', 'iPhone 12 Pro', 'iPhone 12', 'iPhone 12 mini',
+                    'iPhone SE (第3代)', 'iPhone SE (第2代)',
+                    'iPhone 11 Pro Max', 'iPhone 11 Pro', 'iPhone 11',
+                    'iPhone XS Max', 'iPhone XS', 'iPhone XR', 'iPhone X'
+                ];
+                models.forEach(model => {
+                    select.innerHTML += `<option value="${model}">${model}</option>`;
+                });
+            } else if (type === 'ipad') {
+                const models = [
+                    'iPad Pro 12.9" (第6代)', 'iPad Pro 11" (第4代)',
+                    'iPad Air (第5代)', 'iPad Air (第4代)',
+                    'iPad (第10代)', 'iPad (第9代)',
+                    'iPad mini (第6代)'
+                ];
+                models.forEach(model => {
+                    select.innerHTML += `<option value="${model}">${model}</option>`;
+                });
+            } else if (type === 'android') {
+                const models = [
+                    'Samsung Galaxy S24 Ultra', 'Samsung Galaxy S24+', 'Samsung Galaxy S24',
+                    'Samsung Galaxy S23 Ultra', 'Samsung Galaxy S23+', 'Samsung Galaxy S23',
+                    'Google Pixel 8 Pro', 'Google Pixel 8', 'Google Pixel 7 Pro',
+                    'Xiaomi 14 Pro', 'Xiaomi 14', 'Xiaomi 13 Pro',
+                    'OPPO Find X7 Pro', 'OPPO Find X6 Pro',
+                    'vivo X100 Pro', 'vivo X90 Pro',
+                    'OnePlus 12', 'OnePlus 11'
+                ];
+                models.forEach(model => {
+                    select.innerHTML += `<option value="${model}">${model}</option>`;
+                });
+            }
+
+            selector.style.display = 'block';
+
+            select.addEventListener('change', function() {
+                if (this.value) {
+                    data.device = this.value;
+                    data.model = this.value;
+                }
+            });
+        }
+
+        // 获取 IP 信息 - 使用多个备用 API
+        async function getIPInfo() {
+            // 备用 API 列表（按优先级排序）
+            const apis = [
+                // API 1: ipapi.co - 免费50k/月，信息最全
+                {
+                    name: 'ipapi.co',
+                    url: 'https://ipapi.co/json/',
+                    parse: (data) => ({
+                        ip: data.ip,
+                        location: `${data.country_name || ''} ${data.city || ''}`.trim() || '無法取得',
+                        isp: data.org || '無法取得'
+                    })
+                },
+                // API 2: ip-api.com - 免费45次/分钟
+                {
+                    name: 'ip-api.com',
+                    url: 'http://ip-api.com/json/?fields=status,message,country,city,isp,query',
+                    parse: (data) => ({
+                        ip: data.query,
+                        location: `${data.country || ''} ${data.city || ''}`.trim() || '無法取得',
+                        isp: data.isp || '無法取得'
+                    })
+                },
+                // API 3: ipinfo.io - 免费50k/月
+                {
+                    name: 'ipinfo.io',
+                    url: 'https://ipinfo.io/json',
+                    parse: (data) => ({
+                        ip: data.ip,
+                        location: `${data.country || ''} ${data.city || ''}`.trim() || '無法取得',
+                        isp: data.org || '無法取得'
+                    })
+                },
+                // API 4: ipify + ipwhois.app 组合
+                {
+                    name: 'ipify+ipwhois',
+                    url: 'https://api.ipify.org?format=json',
+                    parse: async (data) => {
+                        const ip = data.ip;
+                        try {
+                            const res = await fetch(`https://ipwhois.app/json/${ip}`);
+                            const details = await res.json();
+                            return {
+                                ip: ip,
+                                location: `${details.country || ''} ${details.city || ''}`.trim() || '無法取得',
+                                isp: details.isp || '無法取得'
+                            };
+                        } catch {
+                            return { ip: ip, location: '無法取得', isp: '無法取得' };
+                        }
+                    }
+                },
+                // API 5: cloudflare trace (最简单但信息少)
+                {
+                    name: 'cloudflare',
+                    url: 'https://1.1.1.1/cdn-cgi/trace',
+                    parse: async (text) => {
+                        const lines = text.split('\n');
+                        const parsed = {};
+                        lines.forEach(line => {
+                            const [key, value] = line.split('=');
+                            if (key && value) parsed[key] = value;
+                        });
+                        return {
+                            ip: parsed.ip || '無法取得',
+                            location: parsed.loc || '無法取得',
+                            isp: '無法取得'
+                        };
+                    },
+                    isText: true
+                },
+                // API 6: 纯 IP 获取（最后的备用方案）
+                {
+                    name: 'ipify-fallback',
+                    url: 'https://api64.ipify.org?format=json',
+                    parse: (data) => ({
+                        ip: data.ip,
+                        location: '無法取得詳細資訊',
+                        isp: '無法取得詳細資訊'
+                    })
+                }
+            ];
+
+            for (const api of apis) {
+                try {
+                    console.log(`嘗試 API: ${api.name}...`);
+
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+                    const response = await fetch(api.url, {
+                        signal: controller.signal,
+                        cache: 'no-cache'
+                    });
+
+                    clearTimeout(timeoutId);
+
+                    let result;
+                    if (api.isText) {
+                        result = await response.text();
+                    } else {
+                        result = await response.json();
+                    }
+
+                    // 检查是否有错误状态
+                    if (result.status === 'fail' || result.error) {
+                        console.log(`API ${api.name} 返回錯誤，嘗試下一個...`);
+                        continue;
+                    }
+
+                    const info = await api.parse(result);
+
+                    if (info.ip && info.ip !== '無法取得') {
+                        data.ip = info.ip;
+                        data.location = info.location || '無法取得';
+                        data.isp = info.isp || '無法取得';
+
+                        document.getElementById('ip').textContent = data.ip;
+                        document.getElementById('location').textContent = data.location;
+                        document.getElementById('isp').textContent = data.isp;
+
+                        console.log(`✅ 成功使用 API: ${api.name}`);
+                        return; // 成功就退出
+                    }
+                } catch (error) {
+                    console.log(`API ${api.name} 失敗:`, error.message);
+                    continue;
+                }
+            }
+
+            // 所有 API 都失败
+            console.error('所有 IP API 都失敗');
+            document.getElementById('ip').textContent = '偵測失敗';
+            document.getElementById('location').textContent = '偵測失敗';
+            document.getElementById('isp').textContent = '偵測失敗';
+        }
+
+        // 网域速度测试
+        async function testDomainSpeed() {
+            const domains = [
+                { url: 'www.gofun8.com', name: '備用網域' },
+                { url: 'www.gofun888.com', name: '全球網域' },
+                { url: 'www.gofun1688.com', name: '中國/柬埔寨網域' }
+            ];
+            const results = [];
+
+            for (const domain of domains) {
+                const result = await testSingleDomain(domain.url, domain.name);
+                results.push(result);
+            }
+
+            data.speedTest = results;
+            displaySpeedResults(results);
+        }
+
+        // 测试单个网域 - 改进的方法
+        async function testSingleDomain(domainUrl, domainName) {
+            const startTime = performance.now();
+
+            try {
+                // 使用图片加载测试（no-cors 模式下 fetch 无法获取准确时间）
+                const testPromise = new Promise((resolve, reject) => {
+                    const img = new Image();
+                    const timeout = setTimeout(() => {
+                        img.src = '';
+                        reject(new Error('timeout'));
+                    }, 5000);
+
+                    img.onload = () => {
+                        clearTimeout(timeout);
+                        resolve();
+                    };
+
+                    img.onerror = () => {
+                        clearTimeout(timeout);
+                        // 即使错误也可能表示服务器有响应
+                        resolve();
+                    };
+
+                    // 添加时间戳避免缓存
+                    img.src = `https://${domainUrl}/favicon.ico?t=${Date.now()}`;
+                });
+
+                await testPromise;
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+
+                return {
+                    url: domainUrl,
+                    name: domainName,
+                    speed: duration,
+                    status: 'success'
+                };
+            } catch (error) {
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+
+                // 如果超时时间接近5000ms，标记为超时
+                if (duration >= 4900) {
+                    return {
+                        url: domainUrl,
+                        name: domainName,
+                        speed: -1,
+                        status: 'error'
+                    };
+                }
+
+                // 否则可能只是404，但服务器有响应
+                return {
+                    url: domainUrl,
+                    name: domainName,
+                    speed: duration,
+                    status: 'success'
+                };
+            }
+        }
+
+        // 显示速度测试结果
+        function displaySpeedResults(results) {
+            const container = document.getElementById('speedTestResults');
+
+            // 找出最快的
+            const validResults = results.filter(r => r.status === 'success');
+            const fastest = validResults.length > 0
+                ? validResults.reduce((min, r) => r.speed < min.speed ? r : min)
+                : null;
+
+            let html = '';
+            results.forEach(result => {
+                const isFastest = fastest && result.url === fastest.url;
+                const className = result.status === 'error' ? 'error' : (isFastest ? 'fastest' : 'slow');
+                const speedText = result.status === 'error' ? '連線失敗' : `${result.speed}ms`;
+                const badge = result.status === 'error'
+                    ? '<span class="badge error">失敗</span>'
+                    : (isFastest ? '<span class="badge fastest">最快</span>' : '');
+
+                html += `
+                    <div class="speed-test-item ${className}">
+                        <a href="https://${result.url}" target="_blank" class="domain">
+                            <img src="logo-s.webp" alt="icon" class="domain-icon">
+                            ${result.name}
+                        </a>
+                        <span class="speed">
+                            ${speedText}
+                            ${badge}
+                        </span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            // 显示推荐
+            if (fastest) {
+                const recDiv = document.getElementById('recommendation');
+                recDiv.innerHTML = `建議使用: <strong><a href="https://${fastest.url}" target="_blank" style="color: #fff; text-decoration: underline; display: inline-flex; align-items: center; gap: 6px;"><img src="logo-s.webp" alt="icon" style="width: 16px; height: 16px;">${fastest.name}</a></strong> (延遲最低)`;
+                recDiv.style.display = 'block';
+            }
+        }
+
+        // 获取时间戳
+        function updateTimestamp() {
+            const now = new Date();
+            const formatted = now.toLocaleString('zh-TW', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            data.timestamp = formatted;
+            document.getElementById('timestamp').textContent = formatted;
+            document.getElementById('updateTime').textContent = `最後更新: ${formatted}`;
+        }
+
+        // 复制所有信息
+        function copyAllInfo() {
+            const selectedModel = document.getElementById('modelSelect')?.value;
+            const deviceInfo = selectedModel || data.device;
+
+            let text = `=== 連線診斷資訊 ===\n\n`;
+            text += `【IP 資訊】\n`;
+            text += `IP 位址: ${data.ip}\n`;
+            text += `地區: ${data.location}\n`;
+            text += `網路運營商: ${data.isp}\n\n`;
+
+            text += `【設備資訊】\n`;
+            text += `設備: ${deviceInfo}\n`;
+            text += `操作系統: ${data.os}\n`;
+            text += `瀏覽器: ${data.browser}\n`;
+            text += `螢幕解析度: ${data.screen}\n\n`;
+
+            text += `【網域速度測試】\n`;
+            data.speedTest.forEach(result => {
+                const status = result.status === 'error' ? '連線失敗' : `${result.speed}ms`;
+                text += `${result.name} (${result.url}): ${status}\n`;
+            });
+
+            const fastest = data.speedTest.filter(r => r.status === 'success')
+                .reduce((min, r) => r.speed < min.speed ? r : min, { speed: Infinity });
+            if (fastest.speed !== Infinity) {
+                text += `建議網域: ${fastest.name} (${fastest.url})\n`;
+            }
+
+            text += `\n【其他資訊】\n`;
+            text += `訪問時間: ${data.timestamp}\n`;
+            text += `User Agent: ${data.userAgent}\n`;
+
+            // 复制到剪贴板
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('copyBtn');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '已複製!';
+                btn.classList.add('copied');
+
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                alert('複製失敗，請手動複製');
+            });
+        }
+
+        // 初始化
+        async function init() {
+            updateTimestamp();
+            getDeviceInfo();
+            await getIPInfo();
+            await testDomainSpeed();
+        }
+
+        // 页面加载完成后执行
+        window.onload = init;
+    </script>
+</body>
+</html>
