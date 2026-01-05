@@ -664,14 +664,26 @@
         // 网域速度测试
         async function testDomainSpeed() {
             const domains = [
-                { url: 'www.gofun8.com', name: '備用網域' },
-                { url: 'www.gofun888.com', name: '全球網域' },
-                { url: 'www.gofun1688.com', name: '中國/柬埔寨網域' }
+                // 全球
+                { url: 'www.gofun.game', name: 'GoFun.game', category: '全球' },
+                { url: 'www.gofun.games', name: 'GoFun.games', category: '全球' },
+                { url: 'www.gofun9.com', name: 'GoFun9.com', category: '全球' },
+                { url: 'www.gofun8.games', name: 'GoFun8.games', category: '全球' },
+                { url: 'www.gofun8.win', name: 'GoFun8.win', category: '全球' },
+                { url: 'www.gofun99.com', name: 'GoFun99.com', category: '全球' },
+                { url: 'www.gofun.one', name: 'GoFun.one', category: '全球' },
+                { url: 'www.gofun.win', name: 'GoFun.win', category: '全球' },
+                { url: 'www.gofun8.com', name: 'GoFun8.com', category: '全球' },
+                { url: 'www.gofun888.com', name: 'GoFun888.com', category: '全球' },
+                // 中國
+                { url: 'www.gofun8.vip', name: 'GoFun8.vip', category: '中國' },
+                { url: 'www.gofun8.fun', name: 'GoFun8.fun', category: '中國' },
+                { url: 'www.gofun1688.com', name: 'GoFun1688.com', category: '中國' }
             ];
             const results = [];
 
             for (const domain of domains) {
-                const result = await testSingleDomain(domain.url, domain.name);
+                const result = await testSingleDomain(domain.url, domain.name, domain.category);
                 results.push(result);
             }
 
@@ -680,7 +692,7 @@
         }
 
         // 测试单个网域 - 改进的方法
-        async function testSingleDomain(domainUrl, domainName) {
+        async function testSingleDomain(domainUrl, domainName, category) {
             const startTime = performance.now();
 
             try {
@@ -714,6 +726,7 @@
                 return {
                     url: domainUrl,
                     name: domainName,
+                    category: category,
                     speed: duration,
                     status: 'success'
                 };
@@ -726,6 +739,7 @@
                     return {
                         url: domainUrl,
                         name: domainName,
+                        category: category,
                         speed: -1,
                         status: 'error'
                     };
@@ -735,6 +749,7 @@
                 return {
                     url: domainUrl,
                     name: domainName,
+                    category: category,
                     speed: duration,
                     status: 'success'
                 };
@@ -751,8 +766,39 @@
                 ? validResults.reduce((min, r) => r.speed < min.speed ? r : min)
                 : null;
 
+            // 按分類分組
+            const globalResults = results.filter(r => r.category === '全球');
+            const chinaResults = results.filter(r => r.category === '中國');
+
             let html = '';
-            results.forEach(result => {
+
+            // 全球域名
+            html += '<div class="category-title" style="color: #4a9eff; font-weight: 600; margin: 10px 0 8px 0; font-size: 14px;">全球</div>';
+            globalResults.forEach(result => {
+                const isFastest = fastest && result.url === fastest.url;
+                const className = result.status === 'error' ? 'error' : (isFastest ? 'fastest' : 'slow');
+                const speedText = result.status === 'error' ? '連線失敗' : `${result.speed}ms`;
+                const badge = result.status === 'error'
+                    ? '<span class="badge error">失敗</span>'
+                    : (isFastest ? '<span class="badge fastest">最快</span>' : '');
+
+                html += `
+                    <div class="speed-test-item ${className}">
+                        <a href="https://${result.url}" target="_blank" class="domain">
+                            <img src="logo-s.webp" alt="icon" class="domain-icon">
+                            ${result.name}
+                        </a>
+                        <span class="speed">
+                            ${speedText}
+                            ${badge}
+                        </span>
+                    </div>
+                `;
+            });
+
+            // 中國域名
+            html += '<div class="category-title" style="color: #ff6b6b; font-weight: 600; margin: 20px 0 8px 0; font-size: 14px;">中國</div>';
+            chinaResults.forEach(result => {
                 const isFastest = fastest && result.url === fastest.url;
                 const className = result.status === 'error' ? 'error' : (isFastest ? 'fastest' : 'slow');
                 const speedText = result.status === 'error' ? '連線失敗' : `${result.speed}ms`;
@@ -819,7 +865,15 @@
             text += `螢幕解析度: ${data.screen}\n\n`;
 
             text += `【網域速度測試】\n`;
-            data.speedTest.forEach(result => {
+            // 全球
+            text += `\n[全球]\n`;
+            data.speedTest.filter(r => r.category === '全球').forEach(result => {
+                const status = result.status === 'error' ? '連線失敗' : `${result.speed}ms`;
+                text += `${result.name} (${result.url}): ${status}\n`;
+            });
+            // 中國
+            text += `\n[中國]\n`;
+            data.speedTest.filter(r => r.category === '中國').forEach(result => {
                 const status = result.status === 'error' ? '連線失敗' : `${result.speed}ms`;
                 text += `${result.name} (${result.url}): ${status}\n`;
             });
